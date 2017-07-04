@@ -89,6 +89,7 @@ void checkMagnetometerStatus()
             }
             else
             {
+                Screen.print(0, "Initialize 5");
                 count = 0;
                 base_x = axes[0];
                 base_y = axes[1];
