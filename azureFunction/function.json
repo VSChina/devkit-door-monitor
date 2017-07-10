@@ -1,0 +1,21 @@
+{
+  "bindings": [
+    {
+      "type": "eventHubTrigger",
+      "name": "eventHubMessages",
+      "direction": "in",
+      "path": "%eventHubConnectionPath%",
+      "connection": "eventHubConnectionString"
+    },
+    {
+      "name": "$return",
+      "type": "sendGrid",
+      "direction": "out",
+      "apiKey": "mySendGridKey",
+      "to": "/* the address you want to send email to */",
+      "from": "/* your grid email address */",
+      "subject": "Azure news"
+    }
+  ],
+  "disabled": false
+}
