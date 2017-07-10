@@ -12,9 +12,9 @@
       "type": "sendGrid",
       "direction": "out",
       "apiKey": "mySendGridKey",
-      "to": "/* the address you want to send email to */",
-      "from": "/* your grid email address */",
-      "subject": "Azure news"
+      "to": "<toEmail>",
+      "from": "<fromEmail>",
+      "subject": "Door Status Changed"
     }
   ],
   "disabled": false

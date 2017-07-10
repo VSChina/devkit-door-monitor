@@ -1,7 +1,6 @@
 #include "LIS2MDLSensor.h"
 #include "AZ3166WiFi.h"
 #include "iothub_client_sample_mqtt.h"
-#include <ArduinoJson.h>
 #include <stdlib.h>
 
 DevI2C *i2c;
@@ -46,13 +45,9 @@ void loop()
         return;
     }
 
-    // read id
-    lis2mdl->readId(&id);
-    //Serial.printf("Id: %d\n", id);
-
     // getMAxes
     lis2mdl->getMAxes(axes);
-    //Serial.printf("Axes: x - %d, y - %d, z - %d\n", axes[0], axes[1], axes[2]);
+    Serial.printf("Axes: x - %d, y - %d, z - %d\n", axes[0], axes[1], axes[2]);
 
     char buffer[50];
 
@@ -108,7 +103,7 @@ void checkMagnetometerStatus()
             message = "Door opened";
             curOpened = true;
         }
-        //send message when status change
+        // send message when status change
         if (curOpened != preOpened){
             iothubSendMessage((const unsigned char *)message);
             iothubLoop();
@@ -149,14 +144,3 @@ void checkMagnetometerStatus()
         }
     }
 }
-
-/*void generateMessage(char* message)
-{
-    StaticJsonBuffer<MESSAGE_MAX_LEN> jsonBuffer;
-    JsonObject& root = jsonBuffer.createObject();
-    root["deviceId"] = DEVICE_ID;
-    root["x"] = axes[0];
-    root["y"] = axes[1];
-    root["z"] = axes[2];
-    root.printTo(message, MESSAGE_MAX_LEN);
-}*/

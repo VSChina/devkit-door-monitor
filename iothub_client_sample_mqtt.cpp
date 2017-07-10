@@ -8,89 +8,9 @@
 
 static IOTHUB_CLIENT_LL_HANDLE iotHubClientHandle;
 static bool messagePending = false;
-static int messageCount;
-
-static IOTHUBMESSAGE_DISPOSITION_RESULT c2dMessageCallback(IOTHUB_MESSAGE_HANDLE message, void *userContextCallback)
-{
-    const char *buffer;
-    size_t size;
-
-    if (IoTHubMessage_GetByteArray(message, (const unsigned char **)&buffer, &size) != IOTHUB_MESSAGE_OK)
-    {
-        LogInfo("unable to IoTHubMessage_GetByteArray");
-        return IOTHUBMESSAGE_REJECTED;
-    }
-    else
-    {
-        char *temp = (char *)malloc(size + 1);
-        if (temp == NULL)
-        {
-            LogInfo("Failed to malloc for command");
-            return IOTHUBMESSAGE_REJECTED;
-        }
-        memcpy(temp, buffer, size);
-        temp[size] = '\0';
-        LogInfo("Receive C2D message: %s", temp);
-        free(temp);
-        return IOTHUBMESSAGE_ACCEPTED;
-    }
-}
-
-static void twinCallback(DEVICE_TWIN_UPDATE_STATE updateState, const unsigned char *payLoad, size_t size, void *userContextCallback)
-{
-    char *temp = (char *)malloc(size + 1);
-    for (int i = 0; i < size; i++)
-    {
-        temp[i] = (char)(payLoad[i]);
-    }
-    temp[size] = '\0';
-    free(temp);
-}
-
-void start()
-{
-    LogInfo("Start sending temperature and humidity data");
-}
-
-void stop()
-{
-    LogInfo("Stop sending temperature and humidity data");
-}
-
-const char *onSuccess = "\"Successfully invoke device method\"";
-const char *notFound = "\"No method found\"";
-
-int deviceMethodCallback(const char *methodName, const unsigned char *payload, size_t size, unsigned char **response, size_t *response_size, void *userContextCallback)
-{
-    LogInfo("Try to invoke method %s", methodName);
-    const char *responseMessage = onSuccess;
-    int result = 200;
-
-    if (strcmp(methodName, "start") == 0)
-    {
-        start();
-    }
-    else if (strcmp(methodName, "stop") == 0)
-    {
-        stop();
-    }
-    else
-    {
-        LogInfo("No method %s found", methodName);
-        responseMessage = notFound;
-        result = 404;
-    }
-
-    *response_size = strlen(responseMessage);
-    *response = (unsigned char *)malloc(*response_size);
-    strncpy((char *)(*response), responseMessage, *response_size);
-
-    return result;
-}
 
 void iothubInit()
 {
-    messageCount = 0;
     srand((unsigned int)time(NULL));
 
     // Load connection from EEPROM
@@ -125,23 +45,6 @@ void iothubInit()
         LogInfo("failure to set option \"TrustedCerts\"");
         return;
     }
-
-    if (IoTHubClient_LL_SetMessageCallback(iotHubClientHandle, c2dMessageCallback, NULL) != IOTHUB_CLIENT_OK)
-    {
-        LogInfo("IoTHubClient_LL_SetMessageCallback FAILED!");
-        return;
-    }
-    if (IoTHubClient_LL_SetDeviceTwinCallback(iotHubClientHandle, twinCallback, NULL) != IOTHUB_CLIENT_OK)
-    {
-        LogInfo("Failed on IoTHubClient_LL_SetDeviceTwinCallback");
-        return;
-    }
-
-    if(IoTHubClient_LL_SetDeviceMethodCallback(iotHubClientHandle, deviceMethodCallback, NULL) != IOTHUB_CLIENT_OK)
-    {
-        LogInfo("Failed on IoTHubClient_LL_SetDeviceMethodCallback");
-        return;
-    }
 }
 
 static void sendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, void *userContextCallback)
@@ -154,7 +57,6 @@ static void sendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, v
     {
         LogInfo("Failed to send message to Azure IoT Hub");
     }
-    messageCount++;
     messagePending = false;
 }
 
