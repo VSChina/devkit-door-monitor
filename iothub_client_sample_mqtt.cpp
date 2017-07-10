@@ -7,7 +7,6 @@
 #include "iothub_client_sample_mqtt.h"
 
 static IOTHUB_CLIENT_LL_HANDLE iotHubClientHandle;
-static bool messagePending = false;
 
 void iothubInit()
 {
@@ -57,29 +56,24 @@ static void sendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT result, v
     {
         LogInfo("Failed to send message to Azure IoT Hub");
     }
-    messagePending = false;
 }
 
 void iothubSendMessage(const unsigned char *text)
 {
-    if (!messagePending)
+    IOTHUB_MESSAGE_HANDLE messageHandle = IoTHubMessage_CreateFromByteArray(text, strlen((const char *)text));
+    if (messageHandle == NULL)
     {
-        IOTHUB_MESSAGE_HANDLE messageHandle = IoTHubMessage_CreateFromByteArray(text, strlen((const char *)text));
-        if (messageHandle == NULL)
-        {
-            LogInfo("unable to create a new IoTHubMessage");
-            return;
-        }
-        LogInfo("Sending message: %s", text);
-        if (IoTHubClient_LL_SendEventAsync(iotHubClientHandle, messageHandle, sendConfirmationCallback, NULL) != IOTHUB_CLIENT_OK)
-        {
-            LogInfo("Failed to hand over the message to IoTHubClient");
-            return;
-        }
-        LogInfo("IoTHubClient accepted the message for delivery");
-        messagePending = true;
-        IoTHubMessage_Destroy(messageHandle);
+        LogInfo("unable to create a new IoTHubMessage");
+        return;
     }
+    LogInfo("Sending message: %s", text);
+    if (IoTHubClient_LL_SendEventAsync(iotHubClientHandle, messageHandle, sendConfirmationCallback, NULL) != IOTHUB_CLIENT_OK)
+    {
+        LogInfo("Failed to hand over the message to IoTHubClient");
+        return;
+    }
+    LogInfo("IoTHubClient accepted the message for delivery");
+    IoTHubMessage_Destroy(messageHandle);
 }
 
 void iothubLoop(void)
