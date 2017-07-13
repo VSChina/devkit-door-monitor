@@ -1,0 +1,154 @@
+{
+    "parameters": {
+        "iotHubName": {
+            "type": "string"
+        },
+        "iotHubSku": {
+            "type": "string",
+            "allowedValues": [
+                "F1 - only one per subscription",
+                "S1 - $50 / units",
+                "S2 - $500 / units"
+            ],
+            "defaultValue": "F1 - only one per subscription"
+        },
+        "iotHubUnits": {
+            "type": "int",
+            "minValue": 1,
+            "defaultValue": 1
+        },
+        "iotHubPartitions": {
+            "type": "int",
+            "minValue": 2,
+            "maxValue": 32,
+            "defaultValue": 2
+        },
+        "sendGridApiKey": {
+            "type": "string"
+        },
+        "toEmail": {
+            "type": "string"
+        },
+        "fromEmail": {
+            "type": "string"
+        },
+        "repoUrl": {
+            "type": "string",
+            "defaultValue": "https://github.com/VSChina/devkit-door-monitor.git"
+        }
+    },
+    "variables": {
+        "functionName": "[concat('function', uniquestring(resourceGroup().id))]",
+        "storageName": "[concat('storage', uniquestring(resourceGroup().id))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-08-01",
+            "name": "[variables('functionName')]",
+            "type": "Microsoft.Web/sites",
+            "properties": {
+                "name": "[variables('functionName')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-06-15').key1)]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-06-15').key1)]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~1"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-06-15').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[concat(toLower(variables('functionName')), '8cb7')]"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "6.5.0"
+                        },
+                        {
+                            "name": "mySendGridKey",
+                            "value": "[parameters('sendGridApiKey')]"
+                        },
+                        {
+                            "name": "toEmail",
+                            "value": "[parameters('toEmail')]"
+                        },
+                        {
+                            "name": "fromEmail",
+                            "value": "[parameters('fromEmail')]"
+                        },
+                        {
+                            "name": "eventHubConnectionPath",
+                            "value": "[reference(resourceId('Microsoft.Devices/IoTHubs',parameters('iotHubName'))).eventHubEndpoints.events.path]"
+                        },
+                        {
+                            "name": "eventHubConnectionString",
+                            "value": "[concat('Endpoint=',reference(resourceId('Microsoft.Devices/IoTHubs',parameters('iotHubName'))).eventHubEndpoints.events.endpoint,';SharedAccessKeyName=iothubowner;SharedAccessKey=',listKeys(resourceId('Microsoft.Devices/IotHubs',parameters('iotHubName')), '2017-01-19').value[0].primaryKey)]"
+                        }
+                    ]
+                },
+                "clientAffinityEnabled": false
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageName'))]",
+                "[resourceId('Microsoft.Devices/IotHubs', parameters('iotHubName'))]"
+            ],
+            "location": "[resourceGroup().location]",
+            "kind": "functionapp",
+            "resources": [
+                {
+                    "apiVersion": "2016-08-01",
+                    "name": "web",
+                    "type": "sourcecontrols",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', variables('functionName'))]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "[parameters('repoUrl')]",
+                        "branch": "azureFunction",
+                        "IsManualIntegration": true
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "accountType": "Standard_LRS"
+            }
+        },
+        {
+            "apiVersion": "2017-01-19",
+            "type": "Microsoft.Devices/IotHubs",
+            "name": "[parameters('iotHubName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "eventHubEndpoints": {
+                    "events": {
+                        "retentionTimeInDays": 1,
+                        "partitionCount": "[parameters('iotHubPartitions')]"
+                    }
+                },
+                "features": "None"
+            },
+            "sku": {
+                "name": "[first(split(parameters('iotHubSku'), ' '))]",
+                "capacity": "[parameters('iotHubUnits')]"
+            }
+        }
+    ],
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0"
+}
