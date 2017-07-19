@@ -38,7 +38,7 @@
         }
     },
     "variables": {
-        "functionName": "[concat('function', uniquestring(resourceGroup().id))]",
+        "functionName": "[concat(parameters('iotHubName'), '-function-', uniquestring(resourceGroup().id))]",
         "storageName": "[concat('storage', uniquestring(resourceGroup().id))]"
     },
     "resources": [
