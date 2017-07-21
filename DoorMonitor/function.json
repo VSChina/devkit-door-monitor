@@ -13,8 +13,8 @@
       "type": "sendGrid",
       "direction": "out",
       "apiKey": "mySendGridKey",
-      "to": "<toEmail>",
-      "from": "<fromEmail>",
+      "to": "%toEmail%",
+      "from": "%fromEmail%",
       "subject": "Door Status Changed"
     }
   ],
