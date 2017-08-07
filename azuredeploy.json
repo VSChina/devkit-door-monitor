@@ -114,7 +114,7 @@
                     ],
                     "properties": {
                         "RepoUrl": "[parameters('repoUrl')]",
-                        "branch": "azureFunction",
+                        "branch": "azureFunctionCS",
                         "IsManualIntegration": true
                     }
                 }
