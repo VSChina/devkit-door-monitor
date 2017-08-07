@@ -1,5 +1,5 @@
-module.exports = function (context, eventHubMessages) {
-    context.log(eventHubMessages);
+module.exports = function (context, eventHubMessage) {
+    context.log(eventHubMessage);
 
     var message = {
         // could use temporary settings in the comment below and uncomment it
@@ -19,7 +19,7 @@ module.exports = function (context, eventHubMessages) {
         "content": [
             {
             "type": "text/plain",
-            "value": eventHubMessages
+            "value": eventHubMessage
             }
         ]
     };
